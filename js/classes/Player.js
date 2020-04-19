@@ -50,6 +50,13 @@ Player.prototype.move = function (direction) {
     this.position.x += deltaX;
     this.position.y += deltaY;
   }
+  if (
+    map.getContentOfTile(this.position.x, this.position.y) === TILE_TYPE.DOOR
+  ) {
+    map.nextLevel();
+    this.position.x = 100;
+    this.position.y = 100;
+  }
 };
 
 Player.prototype.getFov = function () {

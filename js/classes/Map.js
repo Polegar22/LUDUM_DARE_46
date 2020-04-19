@@ -5,10 +5,12 @@ const TILE_TYPE = {
   NOTHING: 0,
   WALL: 1,
   VICTIM: 2,
+  DOOR: 3,
 };
 
 function Map() {
-  this.level = LEVEL_1;
+  this.levels = [DEBUG_LEVEL, LEVEL_1, LEVEL_2];
+  this.currentLevel = this.levels.shift();
 }
 
 Map.prototype.getContentOfTile = function (x, y) {
@@ -22,13 +24,16 @@ Map.prototype.getContentOfTile = function (x, y) {
   ) {
     return TILE_TYPE.OUT_OF_BOUND;
   }
-  return this.level[tileY][tileX];
+  return this.currentLevel[tileY][tileX];
+};
+Map.prototype.nextLevel = function () {
+  this.currentLevel = this.levels.shift();
 };
 
 Map.prototype.getHeight = function () {
-  return this.level.length;
+  return this.currentLevel.length;
 };
 
 Map.prototype.getWidth = function () {
-  return this.level[0].length;
+  return this.currentLevel[0].length;
 };

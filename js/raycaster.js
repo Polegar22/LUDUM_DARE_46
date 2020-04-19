@@ -11,12 +11,19 @@ var cameraHeight;
 var distToProjectedPlane;
 var angleBetweenRays;
 
-var player = new Player(400, 128, 180, 65);
+var player = new Player(100, 100, 0, 65);
 var map = new Map();
 var keyPressed = {};
 
-wallLoader = new ImageLoader("wall.png");
-victimLoader = new ImageLoader("amelie.png");
+var wallLoader = new ImageLoader("wall.png");
+var doorLoader = new ImageLoader("door.png");
+var victimLoader = new ImageLoader("woman.png");
+
+var imgByTileType = {
+  [TILE_TYPE.WALL]: wallLoader.image,
+  [TILE_TYPE.DOOR]: doorLoader.image,
+  [TILE_TYPE.VICTIM]: victimLoader.image,
+};
 
 window.onload = function () {
   let mainTheme = document.getElementById("mainTheme");
@@ -96,13 +103,16 @@ function drawScene(ctx) {
         player.getFov() / 2 -
         rayNumber * angleBetweenRays
     );
-    wallOffsetAndHeight = findObjectOffsetAndHeight(TILE_TYPE.WALL, rayAngle);
+    wallOffsetAndHeight = findObjectOffsetAndHeight(
+      [TILE_TYPE.WALL, TILE_TYPE.DOOR],
+      rayAngle
+    );
 
     if (!wallOffsetAndHeight) {
       continue;
     }
     ctx.drawImage(
-      wallLoader.image,
+      imgByTileType[wallOffsetAndHeight.contentOfTile],
       Math.floor(wallOffsetAndHeight.offset),
       0,
       1,
@@ -114,7 +124,7 @@ function drawScene(ctx) {
     );
 
     victimOffsetAndHeight = findObjectOffsetAndHeight(
-      TILE_TYPE.VICTIM,
+      [TILE_TYPE.VICTIM],
       rayAngle
     );
     if (!victimOffsetAndHeight) {
@@ -123,7 +133,7 @@ function drawScene(ctx) {
     if (wallOffsetAndHeight.height < victimOffsetAndHeight.height) {
       let height = victimOffsetAndHeight.height / 1.5;
       ctx.drawImage(
-        victimLoader.image,
+        imgByTileType[victimOffsetAndHeight.contentOfTile],
         Math.floor(victimOffsetAndHeight.offset),
         0,
         1,
@@ -148,16 +158,16 @@ function drawScene(ctx) {
   );
 }
 
-function findObjectOffsetAndHeight(objectToFind, rayAngle) {
+function findObjectOffsetAndHeight(objectsToFind, rayAngle) {
   let horizontalCoordinates = undefined;
-  if (objectToFind === TILE_TYPE.WALL) {
+  if (objectsToFind.includes(TILE_TYPE.WALL)) {
     horizontalCoordinates = findHorizontalIntersectionCoord(
-      objectToFind,
+      objectsToFind,
       rayAngle
     );
   }
   let verticalCoordinates = findVerticalIntersectionCoord(
-    objectToFind,
+    objectsToFind,
     rayAngle
   );
 
@@ -191,13 +201,18 @@ function findObjectOffsetAndHeight(objectToFind, rayAngle) {
     offset = verticalCoordinates.y % 64;
   }
 
+  let contentOfTile =
+    horizontalDist < verticalDist
+      ? horizontalCoordinates.contentOfTile
+      : verticalCoordinates.contentOfTile;
+
   let projectedObjectHeight = Math.round(
     (TILE_SIZE / shortestObjectDistance) * distToProjectedPlane
   );
 
-  return { height: projectedObjectHeight, offset };
+  return { height: projectedObjectHeight, offset, contentOfTile };
 }
-function findHorizontalIntersectionCoord(objectToFind, rayAngle) {
+function findHorizontalIntersectionCoord(objectsToFind, rayAngle) {
   let yDirection = getYDirectionBy(rayAngle);
   let yDelta = TILE_SIZE * yDirection;
   let xDelta = ensureXDirection(TILE_SIZE / getTanDeg(rayAngle), rayAngle);
@@ -215,7 +230,7 @@ function findHorizontalIntersectionCoord(objectToFind, rayAngle) {
     Math.floor((player.getPosition().y - intersectionY) / getTanDeg(rayAngle));
 
   return findNextObjectCoordinate(
-    objectToFind,
+    objectsToFind,
     intersectionX,
     intersectionY,
     xDelta,
@@ -223,7 +238,7 @@ function findHorizontalIntersectionCoord(objectToFind, rayAngle) {
   );
 }
 
-function findVerticalIntersectionCoord(objectToFind, rayAngle) {
+function findVerticalIntersectionCoord(objectsToFind, rayAngle) {
   let xDirection = getXDirectionBy(rayAngle);
   let xDelta = TILE_SIZE * xDirection;
   let yDelta = ensureYDirection(TILE_SIZE * getTanDeg(rayAngle), rayAngle);
@@ -241,7 +256,7 @@ function findVerticalIntersectionCoord(objectToFind, rayAngle) {
     (player.getPosition().x - intersectionX) * getTanDeg(rayAngle);
 
   return findNextObjectCoordinate(
-    objectToFind,
+    objectsToFind,
     intersectionX,
     intersectionY,
     xDelta,
@@ -249,10 +264,10 @@ function findVerticalIntersectionCoord(objectToFind, rayAngle) {
   );
 }
 
-function findNextObjectCoordinate(objectToFind, x, y, xDelta, yDelta) {
+function findNextObjectCoordinate(objectsToFind, x, y, xDelta, yDelta) {
   let contentOfTile = map.getContentOfTile(x, y);
   while (
-    contentOfTile !== objectToFind &&
+    !objectsToFind.includes(contentOfTile) &&
     contentOfTile !== TILE_TYPE.OUT_OF_BOUND
   ) {
     x += xDelta;
@@ -262,7 +277,7 @@ function findNextObjectCoordinate(objectToFind, x, y, xDelta, yDelta) {
   if (contentOfTile == TILE_TYPE.OUT_OF_BOUND) {
     return undefined;
   }
-  return { x, y };
+  return { x, y, contentOfTile };
 }
 
 function findPlayerDistanceToObject(x, y, rayAngle) {
