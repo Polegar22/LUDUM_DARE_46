@@ -43,9 +43,9 @@ Player.prototype.move = function (direction) {
 
   if (
     map.getContentOfTile(
-      this.position.x + deltaX * 5,
-      this.position.y + deltaY * 5
-    ) == TILE_TYPE.NOTHING
+      this.position.x + deltaX * 10,
+      this.position.y + deltaY * 10
+    ) !== TILE_TYPE.WALL
   ) {
     this.position.x += deltaX;
     this.position.y += deltaY;
