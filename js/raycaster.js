@@ -17,12 +17,16 @@ var keyPressed = {};
 
 var wallLoader = new ImageLoader("wall.png");
 var doorLoader = new ImageLoader("door.png");
-var victimLoader = new ImageLoader("woman.png");
+var womanLoader = new ImageLoader("woman.png");
+var dangerousWomanLoader = new ImageLoader("dangerousWoman.png");
+var coffinLoader = new ImageLoader("coffin.png");
 
 var imgByTileType = {
   [TILE_TYPE.WALL]: wallLoader.image,
   [TILE_TYPE.DOOR]: doorLoader.image,
-  [TILE_TYPE.VICTIM]: victimLoader.image,
+  [TILE_TYPE.WOMAN]: womanLoader.image,
+  [TILE_TYPE.DANGEROUS_WOMAN]: dangerousWomanLoader.image,
+  [TILE_TYPE.COFFIN]: coffinLoader.image,
 };
 
 window.onload = function () {
@@ -123,18 +127,18 @@ function drawScene(ctx) {
       wallOffsetAndHeight.height
     );
 
-    victimOffsetAndHeight = findObjectOffsetAndHeight(
-      [TILE_TYPE.VICTIM],
+    spriteOffsetAndHeight = findObjectOffsetAndHeight(
+      [TILE_TYPE.WOMAN, TILE_TYPE.DANGEROUS_WOMAN, TILE_TYPE.COFFIN],
       rayAngle
     );
-    if (!victimOffsetAndHeight) {
+    if (!spriteOffsetAndHeight) {
       continue;
     }
-    if (wallOffsetAndHeight.height < victimOffsetAndHeight.height) {
-      let height = victimOffsetAndHeight.height / 1.5;
+    if (wallOffsetAndHeight.height < spriteOffsetAndHeight.height) {
+      let height = spriteOffsetAndHeight.height / 1.5;
       ctx.drawImage(
-        imgByTileType[victimOffsetAndHeight.contentOfTile],
-        Math.floor(victimOffsetAndHeight.offset),
+        imgByTileType[spriteOffsetAndHeight.contentOfTile],
+        Math.floor(spriteOffsetAndHeight.offset),
         0,
         1,
         TILE_SIZE,

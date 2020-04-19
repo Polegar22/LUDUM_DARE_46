@@ -4,8 +4,10 @@ const TILE_TYPE = {
   OUT_OF_BOUND: -1,
   NOTHING: 0,
   WALL: 1,
-  VICTIM: 2,
-  DOOR: 3,
+  WOMAN: 2,
+  COFFIN: 3,
+  DANGEROUS_WOMAN: 4,
+  DOOR: 5,
 };
 
 function Map() {
