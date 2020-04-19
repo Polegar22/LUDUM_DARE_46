@@ -121,6 +121,7 @@ function drawScene(ctx) {
       continue;
     }
     if (wallOffsetAndHeight.height < victimOffsetAndHeight.height) {
+      let height = victimOffsetAndHeight.height / 1.5;
       ctx.drawImage(
         victimLoader.image,
         Math.floor(victimOffsetAndHeight.offset),
@@ -128,9 +129,9 @@ function drawScene(ctx) {
         1,
         TILE_SIZE,
         rayNumber,
-        PLANE_HEIGHT / 2 + 20 - Math.round(victimOffsetAndHeight.height / 2),
-        2,
-        victimOffsetAndHeight.height
+        PLANE_HEIGHT / 2 - height / 4,
+        1,
+        height
       );
     }
   }
