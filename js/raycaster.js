@@ -65,7 +65,7 @@ function addKeyboardEventListener(ctx) {
       this.location.reload();
     } else if (key === "Enter") {
       initGame(ctx);
-      // mainTheme.play();
+      mainTheme.play();
     } else if (key === " ") {
       if (player) {
         player.setBloodlust();
