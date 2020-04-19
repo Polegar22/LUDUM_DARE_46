@@ -27,7 +27,7 @@ function Player(posX, posY, viewingAngle, fov) {
   this.canMove = true;
   this.isBloody = false;
   this.isWinner = false;
-  this.life = 10;
+  this.life = 20;
   this.isBloodlust = false;
 }
 
@@ -44,9 +44,6 @@ Player.prototype.move = function (direction) {
     return;
   }
 
-  if (this.isBloodlust && this.life > 20) {
-    this.isBloodlust = false;
-  }
   this.animationFrame += this.animationState;
 
   let deltaX = 0;
@@ -69,23 +66,27 @@ Player.prototype.move = function (direction) {
     this.isBloodlust = false;
     this.position.x = 100;
     this.position.y = 100;
+    this.isBloodlust = false;
   } else if (contentOfTile === TILE_TYPE.WOMAN) {
     ohNo.play();
     this.canMove = false;
     this.isBloody = true;
+    this.isBloodlust = false;
+    this.life += 10;
     setTimeout(() => {
       this.canMove = true;
       this.isBloody = false;
       ouf.play();
-      this.life += 30;
+      this.life += 20;
       map.removeContentOfTile(
         this.position.x + deltaX * 10,
         this.position.y + deltaX * 10
       );
-    }, 4000);
+    }, 3500);
   } else if (contentOfTile === TILE_TYPE.DANGEROUS_WOMAN) {
     takeThat.play();
     this.isBloody = true;
+    this.isBloodlust = false;
     this.canMove = false;
     setTimeout(() => {
       this.canMove = true;
@@ -101,6 +102,7 @@ Player.prototype.move = function (direction) {
     coffin.play();
     this.canMove = false;
     setTimeout(() => {
+      this.isBloodlust = false;
       this.isWinner = true;
     }, 2000);
   }
@@ -164,7 +166,10 @@ Player.prototype.getIsWinner = function () {
 };
 
 Player.prototype.setBloodlust = function () {
-  this.isBloodlust = this.life <= 20 && !this.isBloodlust;
+  this.isBloodlust = !this.isBloodlust;
+  if (this.isBloodlust) {
+    this.life = Math.floor(this.life / 2);
+  }
 };
 
 Player.prototype.getIsBloodLust = function () {
