@@ -12,13 +12,18 @@ var distToProjectedPlane;
 var angleBetweenRays;
 
 var player = new Player(128, 128, 80, 65);
+var amelie = new Pnj(128, 256, 80, 65);
 var map = new Map();
 var keyPressed = {};
 
 wallLoader = new ImageLoader("wall.png");
-skyLoader = new ImageLoader("sky.png");
 
 window.onload = function () {
+  let mainTheme = document.getElementById("mainTheme");
+  this.setInterval(function () {
+    // mainTheme.play();
+  }, 30000);
+
   addKeyboardEventListener();
 
   distToProjectedPlane = Math.floor(

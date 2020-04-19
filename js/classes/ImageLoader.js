@@ -5,5 +5,5 @@ function ImageLoader(url) {
     if (!this.complete) throw new Error('Error loading image "' + url + '".');
     this.tilesetRef.width = this.width / TILE_SIZE;
   };
-  this.image.src = "assets/" + url;
+  this.image.src = "assets/sprites/" + url;
 }
