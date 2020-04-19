@@ -8,11 +8,12 @@ const TILE_TYPE = {
 
 function Map() {
   this.level = LEVEL_1;
+  this.victims = [new Victim("amelie.png", 128, 200, 80, 65)];
 }
 
 Map.prototype.getContentOfTile = function (x, y) {
-  var tileY = Math.floor(y / TILE_SIZE);
   var tileX = Math.floor(x / TILE_SIZE);
+  var tileY = Math.floor(y / TILE_SIZE);
   if (
     tileY < 0 ||
     tileY > this.getHeight() - 1 ||
@@ -21,11 +22,23 @@ Map.prototype.getContentOfTile = function (x, y) {
   ) {
     return TILE_TYPE.OUT_OF_BOUND;
   }
-  //   if (this.level[tileY][tileX] == TILE_TYPE.WALL) {
-  //     console.log("tileX: " + tileX + "    tileY: " + tileY);
-  //   }
-
   return this.level[tileY][tileX];
+};
+
+Map.prototype.getFirstVictimInPosition = function (x, y) {
+  var tileX = Math.floor(x / TILE_SIZE);
+  var tileY = Math.floor(y / TILE_SIZE);
+  let victimInPosition = undefined;
+
+  this.victims.forEach((victim) => {
+    victimeTileX = Math.floor(victim.getPosition().x / TILE_SIZE);
+    victimeTileY = Math.floor(victim.getPosition().y / TILE_SIZE);
+    if (victimeTileX === tileX && victimeTileY === tileY) {
+      victimInPosition = victim.getId();
+    }
+  });
+
+  return victimInPosition;
 };
 
 Map.prototype.getHeight = function () {

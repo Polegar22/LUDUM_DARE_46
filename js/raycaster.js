@@ -11,8 +11,7 @@ var cameraHeight;
 var distToProjectedPlane;
 var angleBetweenRays;
 
-var player = new Player(128, 128, 80, 65);
-var amelie = new Pnj(128, 256, 80, 65);
+var player = new Player(128, 128, 0, 65);
 var map = new Map();
 var keyPressed = {};
 
@@ -90,13 +89,23 @@ function drawScene(ctx) {
   ctx.fillStyle = "#686462";
   ctx.fillRect(0, PLANE_HEIGHT / 2, PLANE_WIDTH, PLANE_HEIGHT / 2);
 
+  let visibleVictimsHeight = [];
+
   for (let rayNumber = 0; rayNumber < PLANE_WIDTH; rayNumber++) {
     let rayAngle = computeAngle(
       player.getViewingAngle() +
         player.getFov() / 2 -
         rayNumber * angleBetweenRays
     );
-    wallOffsetAndHeight = findWallOffsetAndHeight(rayAngle);
+    wallOffsetAndHeight = findWallOffsetAndHeight(
+      rayAngle,
+      visibleVictimsHeight
+    );
+
+    if (!wallOffsetAndHeight) {
+      console.log(rayNumber);
+      continue;
+    }
 
     ctx.drawImage(
       wallLoader.image,
@@ -123,29 +132,44 @@ function drawScene(ctx) {
   );
 }
 
-function findWallOffsetAndHeight(rayAngle) {
-  let horizontalDistance = findHorizontalIntersectionDist(rayAngle);
-  let verticalDistance = findVerticalIntersectionDist(rayAngle);
+function findWallOffsetAndHeight(rayAngle, visibleVictimsHeight) {
+  let horizontalCoordinates = findHorizontalIntersectionDist(rayAngle);
+  let verticalCoordinates = findVerticalIntersectionDist(rayAngle);
 
-  let distance =
-    horizontalDistance.distordedDist < verticalDistance.distordedDist
-      ? horizontalDistance
-      : verticalDistance;
-
-  let offset;
-  if (horizontalDistance.distordedDist < verticalDistance.distordedDist) {
-    offset = horizontalDistance.x % 64;
-  } else {
-    offset = verticalDistance.y % 64;
+  if (!horizontalCoordinates && !verticalCoordinates) {
+    return undefined;
   }
 
-  let correctedDistance = Math.floor(
-    distance.distordedDist * getCosDeg(rayAngle - player.getViewingAngle())
-  );
+  let horizontalDist = horizontalCoordinates
+    ? findPlayerDistanceToObject(
+        horizontalCoordinates.wall.x,
+        horizontalCoordinates.wall.y,
+        rayAngle
+      )
+    : TILE_SIZE * TILE_SIZE;
+
+  let verticalDist = verticalCoordinates
+    ? findPlayerDistanceToObject(
+        verticalCoordinates.wall.x,
+        verticalCoordinates.wall.y,
+        rayAngle
+      )
+    : TILE_SIZE * TILE_SIZE;
+
+  let shortestWallDistance =
+    horizontalDist < verticalDist ? horizontalDist : verticalDist;
+
+  let offset;
+  if (horizontalDist < verticalDist) {
+    offset = horizontalCoordinates.wall.x % 64;
+  } else {
+    offset = verticalCoordinates.wall.y % 64;
+  }
 
   let projectedWallHeight = Math.round(
-    (TILE_SIZE / correctedDistance) * distToProjectedPlane
+    (TILE_SIZE / shortestWallDistance) * distToProjectedPlane
   );
+
   return { height: projectedWallHeight, offset };
 }
 function findHorizontalIntersectionDist(rayAngle) {
@@ -165,15 +189,12 @@ function findHorizontalIntersectionDist(rayAngle) {
     player.getPosition().x +
     Math.floor((player.getPosition().y - intersectionY) / getTanDeg(rayAngle));
 
-  nextWallCoord = findNextWallCoordinate(
+  return findNextObjectsCoordinate(
     intersectionX,
     intersectionY,
     xDelta,
     yDelta
   );
-  return nextWallCoord
-    ? findDistanceToWall(nextWallCoord.x, nextWallCoord.y, rayAngle)
-    : { distordedDist: TILE_SIZE * TILE_SIZE };
 }
 
 function findVerticalIntersectionDist(rayAngle) {
@@ -193,37 +214,49 @@ function findVerticalIntersectionDist(rayAngle) {
     player.getPosition().y +
     (player.getPosition().x - intersectionX) * getTanDeg(rayAngle);
 
-  nextWallCoord = findNextWallCoordinate(
+  return findNextObjectsCoordinate(
     intersectionX,
     intersectionY,
     xDelta,
     yDelta
   );
-
-  return nextWallCoord
-    ? findDistanceToWall(nextWallCoord.x, nextWallCoord.y, rayAngle)
-    : { distordedDist: TILE_SIZE * TILE_SIZE };
 }
 
-function findNextWallCoordinate(x, y, xDelta, yDelta) {
+function findNextObjectsCoordinate(x, y, xDelta, yDelta) {
   let contentOfTile = map.getContentOfTile(x, y);
+  let victimId = map.getFirstVictimInPosition(x, y);
+  let victim = {};
+  if (victimId) {
+    victim.id = victimId;
+    victim.x = x;
+    victim.y = y;
+  }
   while (contentOfTile === TILE_TYPE.NOTHING) {
     x += xDelta;
     y += yDelta;
     contentOfTile = map.getContentOfTile(x, y);
   }
+  if (map.getFirstVictimInPosition(x, y) && !victimId) {
+    victim.id = victimId;
+    victim.x = x;
+    victim.y = y;
+  }
   if (contentOfTile == TILE_TYPE.OUT_OF_BOUND) {
     return undefined;
   }
-  return { x, y };
+  return { wall: { x, y }, victim };
 }
 
-function findDistanceToWall(x, y, rayAngle) {
+function findPlayerDistanceToObject(x, y, rayAngle) {
   let distordedDist = Math.floor(
     Math.sqrt(
       Math.pow(player.getPosition().x - x, 2) +
         Math.pow(player.getPosition().y - y, 2)
     )
   );
-  return { distordedDist, x, y };
+
+  let correctedDist = Math.floor(
+    distordedDist * getCosDeg(rayAngle - player.getViewingAngle())
+  );
+  return correctedDist;
 }
