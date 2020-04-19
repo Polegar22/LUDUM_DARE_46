@@ -11,7 +11,7 @@ const TILE_TYPE = {
 };
 
 function Map() {
-  this.levels = [LEVEL_1, LEVEL_2];
+  this.levels = [DEBUG_LEVEL, LEVEL_1, LEVEL_2];
   this.currentLevel = this.levels.shift();
 }
 

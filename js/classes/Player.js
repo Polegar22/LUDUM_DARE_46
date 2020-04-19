@@ -27,7 +27,7 @@ function Player(posX, posY, viewingAngle, fov) {
   this.canMove = true;
   this.isBloody = false;
   this.isWinner = false;
-  this.life = 20;
+  this.life = 25;
   this.isBloodlust = false;
 }
 
@@ -106,8 +106,10 @@ Player.prototype.move = function (direction) {
       this.isWinner = true;
     }, 2000);
   }
-
-  if (contentOfTile !== TILE_TYPE.WALL || player.isBloodlust) {
+  if (
+    (contentOfTile !== TILE_TYPE.WALL || player.isBloodlust) &&
+    contentOfTile !== TILE_TYPE.OUT_OF_BOUND
+  ) {
     this.position.x += deltaX;
     this.position.y += deltaY;
   }
@@ -154,6 +156,12 @@ Player.prototype.idle = function () {
 };
 
 Player.prototype.removeLife = function (amount) {
+  if (this.isBloodlust) {
+    amount = amount * 3;
+  }
+  if (this.life === 0) {
+    aie.play();
+  }
   this.life -= amount;
 };
 

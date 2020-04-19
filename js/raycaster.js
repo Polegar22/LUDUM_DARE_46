@@ -21,6 +21,7 @@ var womanLoader = new ImageLoader("woman.png");
 var dangerousWomanLoader = new ImageLoader("dangerousWoman.png");
 var coffinLoader = new ImageLoader("coffin.png");
 var startupScreenLoader = new ImageLoader("startScreen.png");
+var gameStarted = false;
 
 var imgByTileType = {
   [TILE_TYPE.WALL]: wallLoader.image,
@@ -40,6 +41,7 @@ window.onload = function () {
 };
 
 function initGame(ctx) {
+  gameStarted = true;
   var mainTheme = document.getElementById("mainTheme");
 
   distToProjectedPlane = Math.floor(
@@ -61,22 +63,26 @@ function initGame(ctx) {
 function addKeyboardEventListener(ctx) {
   window.onkeydown = function (event) {
     const key = event.key;
-    if (key === "r") {
-      this.location.reload();
-    } else if (key === "Enter") {
-      initGame(ctx);
-      mainTheme.play();
-    } else if (key === " ") {
-      if (player) {
-        player.setBloodlust();
+    if (gameStarted) {
+      if (key === "r") {
+        this.location.reload();
+      } else if (key === " ") {
+        if (player) {
+          player.setBloodlust();
+        }
+      } else if (
+        key === KEY.LEFT ||
+        key === KEY.UP ||
+        key === KEY.RIGHT ||
+        key === KEY.DOWN
+      ) {
+        keyPressed[key] = true;
       }
-    } else if (
-      key === KEY.LEFT ||
-      key === KEY.UP ||
-      key === KEY.RIGHT ||
-      key === KEY.DOWN
-    ) {
-      keyPressed[key] = true;
+    } else {
+      if (key === "Enter") {
+        initGame(ctx);
+        mainTheme.play();
+      }
     }
   };
   window.onkeyup = function (event) {
