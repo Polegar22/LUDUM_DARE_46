@@ -11,8 +11,8 @@ var cameraHeight;
 var distToProjectedPlane;
 var angleBetweenRays;
 
-var player = new Player(100, 100, 0, 65);
 var map = new Map();
+var player = new Player(100, 100, 0, 65);
 var keyPressed = {};
 
 var wallLoader = new ImageLoader("wall.png");
@@ -20,6 +20,7 @@ var doorLoader = new ImageLoader("door.png");
 var womanLoader = new ImageLoader("woman.png");
 var dangerousWomanLoader = new ImageLoader("dangerousWoman.png");
 var coffinLoader = new ImageLoader("coffin.png");
+var startupScreenLoader = new ImageLoader("startScreen.png");
 
 var imgByTileType = {
   [TILE_TYPE.WALL]: wallLoader.image,
@@ -30,30 +31,46 @@ var imgByTileType = {
 };
 
 window.onload = function () {
-  let mainTheme = document.getElementById("mainTheme");
-  this.setInterval(function () {
-    // mainTheme.play();
-  }, 30000);
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  canvas.width = PLANE_WIDTH;
+  canvas.height = PLANE_HEIGHT;
+  startupScreen(ctx);
+  addKeyboardEventListener(ctx);
+};
 
-  addKeyboardEventListener();
+function initGame(ctx) {
+  var mainTheme = document.getElementById("mainTheme");
 
   distToProjectedPlane = Math.floor(
     PLANE_WIDTH / 2 / getTanDeg(player.getFov() / 2)
   );
   angleBetweenRays = player.getFov() / PLANE_WIDTH;
 
-  var canvas = document.getElementById("canvas");
-  var ctx = canvas.getContext("2d");
-  canvas.width = PLANE_WIDTH;
-  canvas.height = PLANE_HEIGHT;
-
   window.requestAnimationFrame(() => animLoop(ctx));
-};
 
-function addKeyboardEventListener() {
+  let lifeInterval = setInterval(function () {
+    this.player.removeLife(1);
+    if (this.player.getLife() <= 0 || this.player.getIsWinner()) {
+      window.clearTimeout(lifeInterval);
+      drawEndScreen(ctx, this.player.getIsWinner());
+    }
+  }, 1000);
+}
+
+function addKeyboardEventListener(ctx) {
   window.onkeydown = function (event) {
     const key = event.key;
-    if (
+    if (key === "r") {
+      this.location.reload();
+    } else if (key === "Enter") {
+      initGame(ctx);
+      // mainTheme.play();
+    } else if (key === " ") {
+      if (player) {
+        player.setBloodlust();
+      }
+    } else if (
       key === KEY.LEFT ||
       key === KEY.UP ||
       key === KEY.RIGHT ||
@@ -75,21 +92,64 @@ function addKeyboardEventListener() {
   };
 }
 
-function animLoop(ctx) {
-  window.requestAnimationFrame(() => animLoop(ctx));
-  if (keyPressed[KEY.LEFT]) {
-    player.look(DIRECTION.LEFT);
-  } else if (keyPressed[KEY.RIGHT]) {
-    player.look(DIRECTION.RIGHT);
-  }
-  if (keyPressed[KEY.UP]) {
-    player.move(DIRECTION.FORWARD);
-  } else if (keyPressed[KEY.DOWN]) {
-    player.move(DIRECTION.BACKWARD);
+function startupScreen(ctx) {
+  ctx.clearRect(0, 0, PLANE_WIDTH, PLANE_HEIGHT);
+  ctx.drawImage(startupScreenLoader.image, 0, 0, PLANE_WIDTH, PLANE_HEIGHT);
+}
+
+function drawEndScreen(ctx, win = false) {
+  ctx.clearRect(0, 0, PLANE_WIDTH, PLANE_HEIGHT);
+  ctx.fillStyle = "#0D1135";
+  ctx.fillRect(0, 0, PLANE_WIDTH, PLANE_HEIGHT);
+
+  ctx.font = "30px Arial";
+  ctx.fillStyle = "gold";
+  ctx.textAlign = "center";
+
+  if (!win) {
+    ctx.fillText(
+      "You did not manage to stay alive",
+      PLANE_WIDTH / 2,
+      PLANE_HEIGHT / 2 - 30
+    );
+    ctx.fillText(
+      "Try to avoid the garlic woman !",
+      PLANE_WIDTH / 2,
+      PLANE_HEIGHT / 2 + 30
+    );
   } else {
-    player.idle();
+    mainTheme.play();
+    ctx.fillText(
+      "Congratulation you managed to stay alive !",
+      PLANE_WIDTH / 2,
+      PLANE_HEIGHT / 2 - 30
+    );
   }
-  drawScene(ctx);
+  ctx.fillText("Press R to reload", PLANE_WIDTH / 2, PLANE_HEIGHT / 2 + 80);
+}
+
+function animLoop(ctx) {
+  animId = window.requestAnimationFrame(() => animLoop(ctx));
+  if (this.player.getLife() > 0 && !this.player.getIsWinner()) {
+    if (keyPressed[KEY.LEFT]) {
+      player.look(DIRECTION.LEFT);
+    } else if (keyPressed[KEY.RIGHT]) {
+      player.look(DIRECTION.RIGHT);
+    }
+    if (keyPressed[KEY.UP]) {
+      player.move(DIRECTION.FORWARD);
+    } else if (keyPressed[KEY.DOWN]) {
+      player.move(DIRECTION.BACKWARD);
+    } else {
+      player.idle();
+    }
+    drawScene(ctx);
+  } else {
+    window.cancelAnimationFrame(animId);
+  }
+  if (this.player.getIsWinner()) {
+    drawEndScreen(ctx, true);
+  }
 }
 
 function drawScene(ctx) {
@@ -149,6 +209,10 @@ function drawScene(ctx) {
       );
     }
   }
+  if (player.getIsBloodLust()) {
+    ctx.globalAlpha = 0.5;
+  }
+
   ctx.drawImage(
     player.getHandImage(),
     player.getAnimationFrame() * this.player.getWidth(),
@@ -160,6 +224,18 @@ function drawScene(ctx) {
     player.getWidth(),
     player.getHeight()
   );
+
+  if (player.getIsBloody()) {
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = "red";
+    ctx.fillRect(0, 0, PLANE_WIDTH, PLANE_HEIGHT);
+  }
+
+  ctx.globalAlpha = 1;
+
+  ctx.font = "30px Arial";
+  ctx.fillStyle = "gold";
+  ctx.fillText("Life : " + player.getLife(), 10, 30);
 }
 
 function findObjectOffsetAndHeight(objectsToFind, rayAngle) {

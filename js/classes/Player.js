@@ -18,6 +18,17 @@ function Player(posX, posY, viewingAngle, fov) {
   this.animationState = 1;
   this.animationSpeed = 7;
   this.nbFrame = 3;
+  this.takeThat = document.getElementById("takeThat");
+  this.ohNo = document.getElementById("ohNo");
+  this.coffin = document.getElementById("coffin");
+  this.ouf = document.getElementById("ouf");
+  this.aie = document.getElementById("aie");
+  this.step = document.getElementById("step");
+  this.canMove = true;
+  this.isBloody = false;
+  this.isWinner = false;
+  this.life = 10;
+  this.isBloodlust = false;
 }
 
 Player.prototype.look = function (direction) {
@@ -29,6 +40,13 @@ Player.prototype.look = function (direction) {
 };
 
 Player.prototype.move = function (direction) {
+  if (!this.canMove) {
+    return;
+  }
+
+  if (this.isBloodlust && this.life > 20) {
+    this.isBloodlust = false;
+  }
   this.animationFrame += this.animationState;
 
   let deltaX = 0;
@@ -41,22 +59,57 @@ Player.prototype.move = function (direction) {
     deltaY += this.playerSpeed * getSinDeg(this.viewingAngle);
   }
 
-  if (
-    map.getContentOfTile(
-      this.position.x + deltaX * 10,
-      this.position.y + deltaY * 10
-    ) !== TILE_TYPE.WALL
-  ) {
+  let contentOfTile = map.getContentOfTile(
+    this.position.x + deltaX * 10,
+    this.position.y + deltaY * 10
+  );
+
+  if (contentOfTile === TILE_TYPE.DOOR) {
+    map.nextLevel();
+    this.isBloodlust = false;
+    this.position.x = 100;
+    this.position.y = 100;
+  } else if (contentOfTile === TILE_TYPE.WOMAN) {
+    ohNo.play();
+    this.canMove = false;
+    this.isBloody = true;
+    setTimeout(() => {
+      this.canMove = true;
+      this.isBloody = false;
+      ouf.play();
+      this.life += 30;
+      map.removeContentOfTile(
+        this.position.x + deltaX * 10,
+        this.position.y + deltaX * 10
+      );
+    }, 4000);
+  } else if (contentOfTile === TILE_TYPE.DANGEROUS_WOMAN) {
+    takeThat.play();
+    this.isBloody = true;
+    this.canMove = false;
+    setTimeout(() => {
+      this.canMove = true;
+      this.isBloody = false;
+      this.life -= 30;
+      aie.play();
+      map.removeContentOfTile(
+        this.position.x + deltaX * 10,
+        this.position.y + deltaX * 10
+      );
+    }, 2000);
+  } else if (contentOfTile === TILE_TYPE.COFFIN) {
+    coffin.play();
+    this.canMove = false;
+    setTimeout(() => {
+      this.isWinner = true;
+    }, 2000);
+  }
+
+  if (contentOfTile !== TILE_TYPE.WALL || player.isBloodlust) {
     this.position.x += deltaX;
     this.position.y += deltaY;
   }
-  if (
-    map.getContentOfTile(this.position.x, this.position.y) === TILE_TYPE.DOOR
-  ) {
-    map.nextLevel();
-    this.position.x = 100;
-    this.position.y = 100;
-  }
+  step.play();
 };
 
 Player.prototype.getFov = function () {
@@ -96,4 +149,28 @@ Player.prototype.getHeight = function () {
 
 Player.prototype.idle = function () {
   this.animationFrame = 10;
+};
+
+Player.prototype.removeLife = function (amount) {
+  this.life -= amount;
+};
+
+Player.prototype.getLife = function () {
+  return this.life;
+};
+
+Player.prototype.getIsWinner = function () {
+  return this.isWinner;
+};
+
+Player.prototype.setBloodlust = function () {
+  this.isBloodlust = this.life <= 20 && !this.isBloodlust;
+};
+
+Player.prototype.getIsBloodLust = function () {
+  return this.isBloodlust;
+};
+
+Player.prototype.getIsBloody = function () {
+  return this.isBloody;
 };

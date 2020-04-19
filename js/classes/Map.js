@@ -5,13 +5,13 @@ const TILE_TYPE = {
   NOTHING: 0,
   WALL: 1,
   WOMAN: 2,
-  COFFIN: 3,
-  DANGEROUS_WOMAN: 4,
-  DOOR: 5,
+  DANGEROUS_WOMAN: 3,
+  DOOR: 4,
+  COFFIN: 5,
 };
 
 function Map() {
-  this.levels = [DEBUG_LEVEL, LEVEL_1, LEVEL_2];
+  this.levels = [LEVEL_1, LEVEL_2];
   this.currentLevel = this.levels.shift();
 }
 
@@ -27,6 +27,12 @@ Map.prototype.getContentOfTile = function (x, y) {
     return TILE_TYPE.OUT_OF_BOUND;
   }
   return this.currentLevel[tileY][tileX];
+};
+
+Map.prototype.removeContentOfTile = function (x, y) {
+  var tileX = Math.floor(x / TILE_SIZE);
+  var tileY = Math.floor(y / TILE_SIZE);
+  this.currentLevel[tileY][tileX] = 0;
 };
 Map.prototype.nextLevel = function () {
   this.currentLevel = this.levels.shift();
