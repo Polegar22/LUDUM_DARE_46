@@ -27,7 +27,7 @@ function Player(posX, posY, viewingAngle, fov) {
   this.canMove = true;
   this.isBloody = false;
   this.isWinner = false;
-  this.life = 25;
+  this.life = 50;
   this.isBloodlust = false;
 }
 
